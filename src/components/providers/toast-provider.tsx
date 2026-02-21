@@ -1,0 +1,15 @@
+"use client";
+
+import { Toaster } from "react-hot-toast";
+
+export const ToastProvider = () => (
+  <Toaster
+    position="top-right"
+    toastOptions={{
+      style: {
+        fontSize: "0.95rem",
+      },
+    }}
+  />
+);
+
