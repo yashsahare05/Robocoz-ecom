@@ -5,6 +5,7 @@ import {
   products as fallbackProducts,
 } from "@/data/sample-data";
 import { createAdminClient, createServerClient } from "./server";
+type SupabaseClient = NonNullable<ReturnType<typeof createServerClient>>;
 
 type CategoryRow = {
   id: string;
@@ -130,7 +131,7 @@ export const getCategories = async (): Promise<Category[]> => {
   const supabase = createServerClient();
   const admin = createAdminClient();
 
-  const query = (client: ReturnType<typeof createServerClient>) =>
+  const query = (client: SupabaseClient) =>
     client
       .from("categories")
       .select(
@@ -159,7 +160,7 @@ export const getBrands = async (): Promise<Brand[]> => {
   const supabase = createServerClient();
   const admin = createAdminClient();
 
-  const query = (client: ReturnType<typeof createServerClient>) =>
+  const query = (client: SupabaseClient) =>
     client.from("brands").select("id, name, description, logo, website").order("name");
 
   if (supabase) {
@@ -183,7 +184,7 @@ export const getProducts = async (): Promise<Product[]> => {
   const supabase = createServerClient();
   const admin = createAdminClient();
 
-  const query = (client: ReturnType<typeof createServerClient>) =>
+  const query = (client: SupabaseClient) =>
     client
       .from("products")
       .select(
