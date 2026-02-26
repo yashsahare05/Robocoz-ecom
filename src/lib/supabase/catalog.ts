@@ -52,6 +52,29 @@ type ProductRow = {
   brand?: BrandRow | null;
 };
 
+const productSelect = `id,
+  name,
+  slug,
+  sku,
+  summary,
+  description,
+  price,
+  volume_pricing,
+  images,
+  in_stock,
+  min_order_qty,
+  rating,
+  tags,
+  featured,
+  datasheet_url,
+  specs,
+  category:categories (id, name, slug, description, hero_image),
+  subcategory:subcategories (id, name, slug),
+  brand:brands (id, name, description, logo, website)`;
+
+const baseProductQuery = (client: SupabaseClient) =>
+  client.from("products").select(productSelect);
+
 const mapSubcategory = (row: SubcategoryRow): Subcategory => ({
   id: row.id,
   name: row.name,
@@ -185,30 +208,7 @@ export const getProducts = async (): Promise<Product[]> => {
   const admin = createAdminClient();
 
   const query = (client: SupabaseClient) =>
-    client
-      .from("products")
-      .select(
-        `id,
-         name,
-         slug,
-         sku,
-         summary,
-         description,
-         price,
-         volume_pricing,
-         images,
-         in_stock,
-         min_order_qty,
-         rating,
-         tags,
-         featured,
-         datasheet_url,
-         specs,
-         category:categories (id, name, slug, description, hero_image),
-         subcategory:subcategories (id, name, slug),
-         brand:brands (id, name, description, logo, website)`,
-      )
-      .order("created_at", { ascending: false });
+    baseProductQuery(client).order("created_at", { ascending: false });
 
   if (supabase) {
     const { data, error } = await query(supabase);
@@ -225,6 +225,68 @@ export const getProducts = async (): Promise<Product[]> => {
   }
 
   return fallbackProducts;
+};
+
+export const getProductBySlug = async (slug: string): Promise<Product | null> => {
+  if (!slug) return null;
+  const supabase = createServerClient();
+  const admin = createAdminClient();
+
+  const query = (client: SupabaseClient) =>
+    baseProductQuery(client).eq("slug", slug).maybeSingle();
+
+  if (supabase) {
+    const { data, error } = await query(supabase);
+    if (!error && data) {
+      return mapProductRow(data as ProductRow);
+    }
+  }
+
+  if (admin) {
+    const { data, error } = await query(admin);
+    if (!error && data) {
+      return mapProductRow(data as ProductRow);
+    }
+  }
+
+  return fallbackProducts.find((product) => product.slug === slug) ?? null;
+};
+
+export const getRelatedProducts = async (
+  categoryId: string,
+  excludeId?: string,
+  limit = 6,
+): Promise<Product[]> => {
+  if (!categoryId) return [];
+  const supabase = createServerClient();
+  const admin = createAdminClient();
+
+  const query = (client: SupabaseClient) => {
+    let builder = baseProductQuery(client).eq("category_id", categoryId);
+    if (excludeId) {
+      builder = builder.neq("id", excludeId);
+    }
+    return builder.order("created_at", { ascending: false }).limit(limit);
+  };
+
+  if (supabase) {
+    const { data, error } = await query(supabase);
+    if (!error && data && data.length) {
+      return data.map((row) => mapProductRow(row as ProductRow));
+    }
+  }
+
+  if (admin) {
+    const { data, error } = await query(admin);
+    if (!error && data && data.length) {
+      return data.map((row) => mapProductRow(row as ProductRow));
+    }
+  }
+
+  return fallbackProducts
+    .filter((product) => product.category.id === categoryId)
+    .filter((product) => (excludeId ? product.id !== excludeId : true))
+    .slice(0, limit);
 };
 
 export const getCatalogData = async () => {

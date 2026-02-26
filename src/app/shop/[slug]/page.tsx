@@ -1,14 +1,26 @@
 import { Suspense } from "react";
+import { notFound } from "next/navigation";
 import { ProductDetailClient } from "./product-detail-client";
-import { getCatalogData } from "@/lib/supabase/catalog";
+import {
+  getProductBySlug,
+  getRelatedProducts,
+} from "@/lib/supabase/catalog";
 
 export const revalidate = 60;
 
-export default async function ProductDetailPage() {
-  const { products } = await getCatalogData();
+type Props = {
+  params: { slug: string };
+};
+
+export default async function ProductDetailPage({ params }: Props) {
+  const product = await getProductBySlug(params.slug);
+  if (!product) {
+    notFound();
+  }
+  const related = await getRelatedProducts(product.category.id, product.id);
   return (
     <Suspense fallback={<div className="section-container py-6">Loading...</div>}>
-      <ProductDetailClient products={products} />
+      <ProductDetailClient product={product} related={related} />
     </Suspense>
   );
 }

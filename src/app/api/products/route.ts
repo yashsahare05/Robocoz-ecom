@@ -174,21 +174,16 @@ export async function DELETE(request: Request) {
     );
   }
 
-  const { data: existing } = (await supabase
-    .from("products")
-    .select("slug, category:categories (slug)")
-    .eq("id", id)
-    .maybeSingle()) as {
-    data:
-      | {
-          slug: string | null;
-          category?:
-            | { slug?: string | null }
-            | { slug?: string | null }[]
-            | null;
-        }
-      | null;
+  type ExistingProductRow = {
+    slug: string | null;
+    category: { slug: string | null } | null;
   };
+
+  const { data: existing } = await supabase
+    .from("products")
+    .select<ExistingProductRow>("slug, category:categories (slug)")
+    .eq("id", id)
+    .maybeSingle();
 
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) {
@@ -202,9 +197,7 @@ export async function DELETE(request: Request) {
   revalidatePath("/shop");
   revalidatePath("/categories");
   const existingSlug = existing?.slug ?? null;
-  const categorySlug = Array.isArray(existing?.category)
-    ? existing?.category[0]?.slug ?? null
-    : existing?.category?.slug ?? null;
+  const categorySlug = existing?.category?.slug ?? null;
 
   if (existingSlug) {
     revalidatePath(`/shop/${existingSlug}`);
