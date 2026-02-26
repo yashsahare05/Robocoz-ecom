@@ -2,6 +2,8 @@ import { AdminDashboard } from "@/components/admin/dashboard";
 import { AdminGuard } from "@/components/admin/admin-guard";
 import { getCatalogData } from "@/lib/supabase/catalog";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   const { categories, brands, products } = await getCatalogData();
   return (

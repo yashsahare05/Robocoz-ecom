@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { ProductDetailClient } from "./product-detail-client";
 import { getCatalogData } from "@/lib/supabase/catalog";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductDetailPage() {
   const { products } = await getCatalogData();
   return (
