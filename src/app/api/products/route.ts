@@ -174,11 +174,21 @@ export async function DELETE(request: Request) {
     );
   }
 
-  const { data: existing } = await supabase
+  const { data: existing } = (await supabase
     .from("products")
     .select("slug, category:categories (slug)")
     .eq("id", id)
-    .maybeSingle();
+    .maybeSingle()) as {
+    data:
+      | {
+          slug: string | null;
+          category?:
+            | { slug?: string | null }
+            | { slug?: string | null }[]
+            | null;
+        }
+      | null;
+  };
 
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) {
@@ -191,11 +201,16 @@ export async function DELETE(request: Request) {
   revalidatePath("/");
   revalidatePath("/shop");
   revalidatePath("/categories");
-  if (existing?.slug) {
-    revalidatePath(`/shop/${existing.slug}`);
+  const existingSlug = existing?.slug ?? null;
+  const categorySlug = Array.isArray(existing?.category)
+    ? existing?.category[0]?.slug ?? null
+    : existing?.category?.slug ?? null;
+
+  if (existingSlug) {
+    revalidatePath(`/shop/${existingSlug}`);
   }
-  if (existing?.category?.slug) {
-    revalidatePath(`/categories/${existing.category.slug}`);
+  if (categorySlug) {
+    revalidatePath(`/categories/${categorySlug}`);
   }
 
   return NextResponse.json({ ok: true });
