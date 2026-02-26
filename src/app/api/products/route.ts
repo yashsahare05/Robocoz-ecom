@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
@@ -137,7 +138,16 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ product: mapProductRow(data as any) });
+  const product = mapProductRow(data as any);
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/categories");
+  revalidatePath(`/shop/${product.slug}`);
+  if (product.category?.slug) {
+    revalidatePath(`/categories/${product.category.slug}`);
+  }
+
+  return NextResponse.json({ product });
 }
 
 export async function DELETE(request: Request) {
@@ -164,12 +174,28 @@ export async function DELETE(request: Request) {
     );
   }
 
+  const { data: existing } = await supabase
+    .from("products")
+    .select("slug, category:categories (slug)")
+    .eq("id", id)
+    .maybeSingle();
+
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) {
     return NextResponse.json(
       { error: error.message ?? "Failed to delete product." },
       { status: 500 },
     );
+  }
+
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/categories");
+  if (existing?.slug) {
+    revalidatePath(`/shop/${existing.slug}`);
+  }
+  if (existing?.category?.slug) {
+    revalidatePath(`/categories/${existing.category.slug}`);
   }
 
   return NextResponse.json({ ok: true });

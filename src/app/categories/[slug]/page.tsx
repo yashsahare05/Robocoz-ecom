@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ProductGrid } from "@/components/shop/product-grid";
 import { getCatalogData } from "@/lib/supabase/catalog";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type Props = {
   params: { slug: string };

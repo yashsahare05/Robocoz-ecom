@@ -5,7 +5,7 @@ import { ServicesOverview } from "@/components/home/services-overview";
 import { Testimonials } from "@/components/home/testimonials";
 import { WhyChooseUs } from "@/components/home/value-props";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default function HomePage() {
   return (
