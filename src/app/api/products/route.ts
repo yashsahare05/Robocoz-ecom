@@ -182,9 +182,8 @@ export async function DELETE(request: Request) {
   const { data: existing } = await supabase
     .from("products")
     .select("slug, category:categories (slug)")
-    .returns<ExistingProductRow>()
     .eq("id", id)
-    .maybeSingle();
+    .maybeSingle<ExistingProductRow>();
 
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) {
