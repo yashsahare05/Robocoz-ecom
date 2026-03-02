@@ -238,14 +238,14 @@ export const getProductBySlug = async (slug: string): Promise<Product | null> =>
   if (supabase) {
     const { data, error } = await query(supabase);
     if (!error && data) {
-      return mapProductRow(data as ProductRow);
+      return mapProductRow(data as unknown as ProductRow);
     }
   }
 
   if (admin) {
     const { data, error } = await query(admin);
     if (!error && data) {
-      return mapProductRow(data as ProductRow);
+      return mapProductRow(data as unknown as ProductRow);
     }
   }
 
@@ -272,14 +272,14 @@ export const getRelatedProducts = async (
   if (supabase) {
     const { data, error } = await query(supabase);
     if (!error && data && data.length) {
-      return data.map((row) => mapProductRow(row as ProductRow));
+      return data.map((row) => mapProductRow(row as unknown as ProductRow));
     }
   }
 
   if (admin) {
     const { data, error } = await query(admin);
     if (!error && data && data.length) {
-      return data.map((row) => mapProductRow(row as ProductRow));
+      return data.map((row) => mapProductRow(row as unknown as ProductRow));
     }
   }
 
